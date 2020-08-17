@@ -56,18 +56,20 @@
             </template>
           </el-table-column>
           <el-table-column label="操作">
-            <template>
+            <template slot-scope="scope">
               <!-- 修改 -->
               <el-button
                 type="primary"
                 icon="el-icon-edit"
                 size="min"
+                @click="showEditDialog(scope.row.id)"
               ></el-button>
               <!-- 删除 -->
               <el-button
                 type="danger"
                 icon="el-icon-delete"
                 size="min"
+                @click="deleteUserById(scope.row.id)"
               ></el-button>
               <el-tooltip
                 class="item"
@@ -125,11 +127,46 @@
           <el-input v-model="addForm.mobile"></el-input>
         </el-form-item>
       </el-form>
+
       <span slot="footer" class="dialog-footer">
         <el-button @click="addDialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 修改用户 -->
+    <el-dialog
+      title="修改用户信息"
+      :visible.sync="esitDialogVisible"
+      width="50%"
+      @close="esitDialogClose"
+    >
+      <!-- 表单部分 -->
+      <el-form
+        :model="esitForm"
+        :rules="esitFormRules"
+        ref="esitFormRef"
+        label-width="100px"
+        class="demo-ruleForm"
+      >
+        <el-form-item label="用户名">
+          <el-input v-model="esitForm.username" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="esitForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="电话" prop="mobile">
+          <el-input v-model="esitForm.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="esitDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="esitUserInfo"
+          >确 定</el-button
+        >
+      </span>
+    </el-dialog>
+    
   </div>
 </template>
 <script>
@@ -145,9 +182,10 @@ export default {
         cb(new Error("请输入正确的邮箱"));
       }
     };
+    // 自定义的验证规则
     // 验证手机号码规则
     var checkmobile = (rule, value, cb) => {
-      //验证预想的正则
+      //验证邮箱的正则
       const regEmail = /^1[3456789]\d{9}$/;
       if (regEmail.test(value)) {
         return cb();
@@ -190,6 +228,23 @@ export default {
           { validator: checkmobile, trigger: "blur" },
         ],
       },
+      //控制修改用户对话框的显示与隐藏
+      esitDialogVisible: false,
+      //获取到的用户信息
+      esitForm: {},
+      //修改表单的验证规则
+      esitFormRules: {
+        email: [
+          { required: true, message: "请输入邮箱", trigger: "blur" },
+          { validator: checkemail, trigger: "blur" },
+        ],
+        mobile: [
+          { required: true, message: "请输入电话", trigger: "blur" },
+          { validator: checkmobile, trigger: "blur" },
+        ],
+      },
+      
+
     };
   },
   created() {
@@ -249,16 +304,68 @@ export default {
           //可以发起添加用户的网络请求
         }
         const { data: res } = await this.$http.post("users", this.addForm);
-        if (res.meta.msg !== 200) {
+        if (res.meta.msg !== 201) {
           this.$message.success("用户添加成功");
         } else {
           this.$message.error("用户添加失败");
         }
-        this.addDialogVisible = false;
-        this.getUserList();
+        this.addDialogVisible = false; //隐藏添加用户的对话框
+        this.getUserList(); //重新获取用户列表
       });
+    },
+    //展示编辑用户的对话框
+    async showEditDialog(id) {
+      const { data: res } = await this.$http.get("/users/" + id);
+      if (res.meta.status !== 200) {
+        return this.$message.error("查询用户信息失败");
+      }
+      this.esitForm = res.data;
+      this.esitDialogVisible = true;
+    },
+    //监听修改用户对话框的关闭事件
+    esitDialogClose() {
+       this.$refs.esitFormRef.resetFields();
+    },
+    //提交修改的用户信息
+    esitUserInfo(){
+      this.$refs.esitFormRef.validate(async valid => {
+        if (!valid) {
+          return;
+          //可以发起修改用户的网络请求
+        }
+        const { data: res } = await this.$http.put("users/ "+ this.esitForm.id,{
+          email:this.esitForm.email,mobile:this.esitForm.mobile
+        });
+        if (res.meta.msg !== 200) {
+          this.$message.error("用户信息修改失败");
+        } 
+          this.esitDialogVisible = false; //隐藏修改用户的对话框
+          this.getUserList(); //重新获取用户列表
+          this.$message.success("用户信息修改成功");
+  
+      });
+    },
+    //根据ID删除用户
+    async deleteUserById(id){
+      //弹框询问是否删除
+      const confirmResult = await this.$confirm("此操作将永久删除该用户, 是否继续?", "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        }).catch(err => err)
+        //如果用户确认删除，则返回值为字符串confirm
+        //如果用户取消删除，侧返回值为字符串cancel
+        if(confirmResult !== 'confirm'){
+          return this.$message.info("已取消")
+        }
+        //
+        const {data:res} = await this.$http.delete('users/'+id)
+        if(res.meta.status!==200){
+          return this.$message.error("删除失败")
+        }
+        this.$message.success("删除成功")
+        this.getUserList();   
     }
-    
   },
 };
 </script>
