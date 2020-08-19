@@ -305,9 +305,9 @@ export default {
         }
         const { data: res } = await this.$http.post("users", this.addForm);
         if (res.meta.msg !== 201) {
-          this.$message.success("用户添加成功");
+          this.$message.success("用户添加失败");
         } else {
-          this.$message.error("用户添加失败");
+          this.$message.error("用户添加成功");
         }
         this.addDialogVisible = false; //隐藏添加用户的对话框
         this.getUserList(); //重新获取用户列表
