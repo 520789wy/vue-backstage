@@ -9,7 +9,7 @@
     <!-- 卡片视图 -->
     <el-card>
       <el-row>
-        <el-button type="primary">添加分类</el-button>
+        <el-button type="primary" @click="dialogVisible = true">添加分类</el-button>
       </el-row>
       <el-table
         :data="goodsCategories"
@@ -47,8 +47,6 @@
             <el-button type="danger" icon="el-icon-delete">删除</el-button>
           </template>
         </el-table-column>
-      
-        
       </el-table>
       <!-- 分页 -->
       <el-pagination
@@ -61,7 +59,28 @@
       :total="total">
     </el-pagination>
     </el-card>
-    
+    <!-- 添加分类 -->
+    <el-dialog title="添加商品分类"  :visible.sync="dialogVisible" width="50%">
+      <el-form ref="form" :model="addCategory" label-width="80px" >
+        <el-form-item label="分类名称">
+          <el-input v-model="addCategory.category_name"></el-input>
+        </el-form-item>
+        <el-form-item label="父级分类">
+          <el-select v-model="addCategory.cat_name" placeholder="请选择">
+            <el-option
+              v-for="item in goodsCategories"
+              :key="item.cat_id"
+              :label="item.cat_name"
+              :value="item.cat_name">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="CategorySubmit">确定</el-button>
+          <el-button>取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -81,6 +100,14 @@ export default {
         pagenum:1,//当前页数
         pagesize:5,//当前页显示数据
       },
+      //对话框
+      dialogVisible:false,
+      //存放添加分类信息数据
+      addCategory:{
+        cat_name:'',
+        category_name:''
+      }
+      
     };
   },
   created() {
@@ -97,7 +124,6 @@ export default {
       this.total = res.data.total
       console.log( this.goodsCategories)
     },
-    
     //分页
     //监听pageSize的改变
     handleSizeChange(newsize){
@@ -105,8 +131,16 @@ export default {
       this.hetgoodsCategories();
     },
     //监听页码值发生的改变
-    handleCurrentChange(){
-
+    handleCurrentChange(newPage){
+      this.queryInfo.pagenum = newPage;
+      this.hetgoodsCategories();
+    },
+    //添加分类信息
+    async CategorySubmit(){
+      const {data:res} = await this.$http.post("categories",this.addCategory)
+      if(res.meta.status !== 201){
+        console.log("创建失败")
+      }
     }
   },
   computed: {
@@ -121,5 +155,13 @@ export default {
   .el-tag{
     color:#fff;
   }
-  
+  .button{
+    text-align: right;
+  }
+  .el-input,.el-select{
+    width:100%;
+  }
+  .el-form-item{
+    text-align: right;
+  }
 </style>
