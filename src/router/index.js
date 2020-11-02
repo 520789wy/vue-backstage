@@ -8,6 +8,7 @@ import Rights from "../components/power/Rights.vue";
 import Roles from "../components/power/Roles.vue";
 import Cate from "../components/goods/Cate.vue";
 
+
 Vue.use(VueRouter);
 
 const routes = [
@@ -27,6 +28,10 @@ const routes = [
       {
         path:"/goods",
         component:resolve => (require(["@/components/goods/GoodList"],resolve))
+      },
+      {
+        path:"/orders",
+        component:resolve =>(require(["@/components/orders/Orders"],resolve))
       }
     ]
   }
