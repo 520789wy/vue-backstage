@@ -151,12 +151,12 @@ export default {
     //监听pageSize的改变
     handleSizeChange(newsize){
       this.queryInfo.pagesize = newsize;
-      this.hetgoodsCategories();
+      this.getgoodsCategories();
     },
     //监听页码值发生的改变
     handleCurrentChange(newPage){
       this.queryInfo.pagenum = newPage;
-      this.hetgoodsCategories();
+      this.getgoodsCategories();
     },
     showAddCateDialog(){
       this.getparentCateList()
