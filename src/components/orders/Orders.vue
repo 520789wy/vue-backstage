@@ -18,7 +18,12 @@
                 <el-table-column type="index" label="#" width="50"></el-table-column>
                 <el-table-column prop="order_number" label="订单编号"></el-table-column>
                 <el-table-column prop="order_price" label="订单价格"></el-table-column>
-                <el-table-column prop="pay_status" label="是否付款"></el-table-column>
+                <el-table-column prop="pay_status" label="是否付款">
+                    <template slot-scope="payscope">
+                        <el-tag v-if="payscope == 1" class="tagmessage">已付款</el-tag>
+                        <el-tag else="payscope == 0" color="red" class="tagmessage">未付款</el-tag>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="is_send" label="是否发货"></el-table-column>
                 <el-table-column prop="create_time" label="下单时间"></el-table-column>
                 <el-table-column  label="操作">
@@ -27,7 +32,7 @@
                             <el-button type="primary" icon="el-icon-edit" @click="getRowOrderList(orderscope.row.order_id)"></el-button>
                         </el-tooltip>
                         <el-tooltip class="item" effect="dark" content="查看物流信息" placement="top-start">
-                            <el-button type="success" icon="el-icon-location-outline"></el-button>
+                            <el-button type="success" icon="el-icon-location-outline" @click="showLogisticsList(orderscope.row.order_id)"></el-button>
                         </el-tooltip>
                     </template>
                 </el-table-column>
@@ -63,6 +68,23 @@
                     <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
                 </span>
             </el-dialog>
+            <!-- 物流信息 -->
+            <el-dialog 
+                title="查看物流信息"
+                :visible.sync="ordersDialogVisible"
+                width="65%"
+            >
+                <el-steps direction="vertical" :active="1" >
+                    <el-step 
+                        v-for="(item,index) in logisticslist" 
+                        :title="item.context"
+                        :description="item.ftime"
+                        :key="index"
+                    ></el-step>
+                    <!-- <el-step title="步骤 2"></el-step>
+                    <el-step title="步骤 3" description="这是一段很长很长很长的描述性文字"></el-step> -->
+                </el-steps>
+            </el-dialog>
         </el-card>
     </div>
 </template>
@@ -81,8 +103,11 @@
                     is_send:''
                 },
                 orderDialogVisible:false,
+                ordersDialogVisible:false,
                 //表单提交数据
-                orderPutlist:{}
+                orderPutlist:{},
+                //物流信息
+                logisticslist:{}
                 // orderPutlist:{
                 //     consignee_addr:'',
                 //     regioninput:''
@@ -124,10 +149,22 @@
                 this.orderPutlist = res.data
                 console.log(this.orderPutlist)
                 this.orderDialogVisible = true
-                
+            },
+            async showLogisticsList(id){
+                const {data : res} = await this.$http.get('/kuaidi/' + id)
+                if(res.meta.status !==200){
+                    return this.$message.error("获取物流信息失败")
+                }
+                this.logisticslist = res.data
+                console.log(this.logisticslist)
+                this.ordersDialogVisible = true
             }
         }
         
     }
 </script>
-<style></style>
+<style scoped>
+.tagmessage{
+    color:#fff
+}
+</style>
